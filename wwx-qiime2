@@ -1,0 +1,33 @@
+启动qiime2
+source activate qiime2-2020.2
+创建工作目录并进入工作目录
+wd=/mndt/d/qiime2/
+mkdir -p ${wd}
+cd ${wd}
+压缩已经下载的序列
+gzip barcodes.fastq \gzip forward.fastq \ gzip reverse.fastq
+mkdir创建序列存放目录并将序列保存其中
+mkdir -p emp-paired-end-sequences  将压缩的文件保存于创建的文件中
+一 数据导入：（双端数据导入，双端数据导入，数据建库类型为EMP双端序列）
+EMPPairedEndSequences(数据来自EMP项目)
+time qiime tools import \ --type EMPPairedEndSequences \ --input-path emp-paired-end-sequences \ --output-path emp-paired-end-sequences.qza
+二 样本拆分：（按Barcode序列信息进行样品拆分）
+time qiime demux emp-paired \ --m-barcodes-file Mapping_file_yellowhorn.txt \ --m-barcodes-column BarcodeSequence \ --p-rev-comp-mapping-barcodes \ --i-seqs emp-paired-end-sequences.qza \ --o-per-sample-sequences demux.qza \ --o-error-correction-details demux-details.qza
+可视化：Mapping_file_yellowhorn.txt
+三 DADA2降噪：
+time qiime dada2 denoise-paired \ --i-demultiplexed-seqs demux.qza \ --p-trim-left-f 0 \ --p-trim-left-r 0 \ --p-trunc-len-f 250 \ --p-trunc-len-r 250 \ --o-table table.qza \ --o-representative-sequences rep-seqs.qza \ --o-denoising-stats denoising-stats.qza \ --p-n-threads 0
+输出结果为：
+table.qza: 特征表。
+rep-seqs.qza: 代表序列。
+denoising-stats.qza: 去噪过程统计。
+特征表可视化：
+time qiime feature-table summarize \ --i-table table.qza \ --o-visualization table.qzv \ --m-sample-metadata-file Mapping_file_second_run.txt
+代表序列统计可视化：
+time qiime feature-table tabulate-seqs \ --i-data rep-seqs.qza \ --o-visualization rep-seqs.qzv
+去噪过程统计可视化：
+time qiime metadata tabulate \ --m-input-file denoising-stats.qza \ --o-visualization denoising-stats.qzv
+可视化结果：
+table.qzv：特征表可视化。
+rep-seqs.qzv：代表序列可视化。
+denoising-stats.qzv：去噪过程统计数据可视化。
+四 构建进化树
