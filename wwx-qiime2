@@ -1,33 +1,51 @@
-启动qiime2
+#启动qiime2
 source activate qiime2-2020.2
-创建工作目录并进入工作目录
-wd=/mndt/d/qiime2/
+#创建工作目录并进入工作目录
+wd=/mnt/d/qiime2/
 mkdir -p ${wd}
 cd ${wd}
-压缩已经下载的序列
-gzip barcodes.fastq \gzip forward.fastq \ gzip reverse.fastq
-mkdir创建序列存放目录并将序列保存其中
+#测序原始数据更名
+工作目录下建文件夹emp-paired-end-sequences
+#将原始数据放入文件夹后重命名
+Undetermined_S0_L001_I1_001.fastq.gz重命名为barcodes.fastq.gz
+Undetermined_S0_L001_R1_001.fastq.gz重命名为forward.fastq.gz
+Undetermined_S0_L001_R2_001.fastq.gz重命名为reverse.fastq.gz
 mkdir -p emp-paired-end-sequences  将压缩的文件保存于创建的文件中
-一 数据导入：（双端数据导入，双端数据导入，数据建库类型为EMP双端序列）
+#数据导入：（数据建库类型为EMP双端序列）
 EMPPairedEndSequences(数据来自EMP项目)
-time qiime tools import \ --type EMPPairedEndSequences \ --input-path emp-paired-end-sequences \ --output-path emp-paired-end-sequences.qza
-二 样本拆分：（按Barcode序列信息进行样品拆分）
-time qiime demux emp-paired \ --m-barcodes-file Mapping_file_yellowhorn.txt \ --m-barcodes-column BarcodeSequence \ --p-rev-comp-mapping-barcodes \ --i-seqs emp-paired-end-sequences.qza \ --o-per-sample-sequences demux.qza \ --o-error-correction-details demux-details.qza
-可视化：Mapping_file_yellowhorn.txt
-三 DADA2降噪：
-time qiime dada2 denoise-paired \ --i-demultiplexed-seqs demux.qza \ --p-trim-left-f 0 \ --p-trim-left-r 0 \ --p-trunc-len-f 250 \ --p-trunc-len-r 250 \ --o-table table.qza \ --o-representative-sequences rep-seqs.qza \ --o-denoising-stats denoising-stats.qza \ --p-n-threads 0
-输出结果为：
-table.qza: 特征表。
-rep-seqs.qza: 代表序列。
-denoising-stats.qza: 去噪过程统计。
-特征表可视化：
-time qiime feature-table summarize \ --i-table table.qza \ --o-visualization table.qzv \ --m-sample-metadata-file Mapping_file_second_run.txt
-代表序列统计可视化：
-time qiime feature-table tabulate-seqs \ --i-data rep-seqs.qza \ --o-visualization rep-seqs.qzv
-去噪过程统计可视化：
-time qiime metadata tabulate \ --m-input-file denoising-stats.qza \ --o-visualization denoising-stats.qzv
+time qiime tools import --type EMPPairedEndSequences --input-path emp-paired-end-sequences --output-path emp-paired-end-sequences.qza
+# 样本拆分：（按Barcode序列信息进行样品拆分）
+time qiime demux emp-paired --m-barcodes-file Mapping_file_yellowhorn.txt --m-barcodes-column BarcodeSequence --p-rev-comp-mapping-barcodes --i-seqs emp-paired-end-sequences.qza --o-per-sample-sequences demux.qza --o-error-correction-details demux-details.qza
+#DADA2降噪：
+time qiime dada2 denoise-paired --i-demultiplexed-seqs demux.qza --p-trim-left-f 0 --p-trim-left-r 0  --p-trunc-len-f 250 --p-trunc-len-r 250  --o-table table.qza  --o-representative-sequences rep-seqs.qza --o-denoising-stats denoising-stats.qza --p-n-threads 0
+#特征表可视化：
+time qiime feature-table summarize --i-table table.qza  --o-visualization table.qzv --m-sample-metadata-file Mapping_file_second_run.txt
+#代表序列统计可视化：
+time qiime feature-table tabulate-seqs  --i-data rep-seqs.qza --o-visualization rep-seqs.qzv
+#去噪过程统计可视化：
+time qiime metadata tabulate  --m-input-file denoising-stats.qza --o-visualization denoising-stats.qzv
 可视化结果：
 table.qzv：特征表可视化。
 rep-seqs.qzv：代表序列可视化。
 denoising-stats.qzv：去噪过程统计数据可视化。
-四 构建进化树
+#数据分类注释
+time qiime feature-classifier classify-sklearn  --i-classifier gg-13-8-99-515-806-nb-classifier.qza --i-reads rep-seqs.qza --o-classification taxonomy.qza
+#生成物种可视化
+time qiime metadata tabulate --m-input-file taxonomy.qza --o-visualization taxonomy.qzv
+#过滤线粒体、叶绿体
+time qiime taxa filter-table --i-table table.qza --i-taxonomy taxonomy.qza --p-exclude mitochondria,chloroplast --o-filtered-table table-no-mitochondria-no-chlorplast.qza
+#过滤不能分类
+time qiime taxa filter-table  --i-table table-no-mitochondria-no-chlorplast.qza  --i-taxonomy taxonomy.qza --p-exclude Unassigned --o-filtered-table table-no-m-c-u.qza
+#物种组成堆积图
+time qiime taxa barplot  --i-table table-no-m-c-u.qza --i-taxonomy taxonomy.qza --m-metadata-file Mapping_file_second_run.txt --o-visualization taxa-bar-plots.qzv
+#将过滤后的特征表转化为biom格式
+qiime tools export --input-path feature-frequency-filtered-table_10.qza --output-path exported-feature-table
+#将taxonomy.qza文件导出为tsv格式
+qiime tools export --input-path taxonomy.qza --output-path exported-feature_table
+#将taxonomy.tsv添加到特征表 biom add-metadata -i feature-table.biom -o table.w_omd.biom --observation-metadata-fp taxonomy.tsv --observation-header OTUID,taxonomy --sc-separated taxonomy
+#将特征表导出为txt格式
+biom convert -i table.w_omd.biom -o feature-frequency-filtered-table_10.txt --to-tsv --header-key taxonomy
+# 构建进化树
+time qiime phylogeny align-to-tree-mafft-fasttree --i-sequences rep-seqs.qza  --o-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza --o-tree unrooted-tree.qza \ --o-rooted-tree rooted-tree.qza
+#多样性分析
+time qiime diversity core-metrics-phylogenetic  --i-phylogeny rooted-tree.qza  --i-table table-no-m-c-u.qza  --p-sampling-depth 15000  --m-metadata-file Mapping_file_second_run.txt  --output-dir core-metrics-result
