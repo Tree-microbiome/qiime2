@@ -49,3 +49,14 @@ biom convert -i table.w_omd.biom -o feature-frequency-filtered-table_10.txt --to
 time qiime phylogeny align-to-tree-mafft-fasttree --i-sequences rep-seqs.qza  --o-alignment aligned-rep-seqs.qza --o-masked-alignment masked-aligned-rep-seqs.qza --o-tree unrooted-tree.qza \ --o-rooted-tree rooted-tree.qza
 #多样性分析
 time qiime diversity core-metrics-phylogenetic  --i-phylogeny rooted-tree.qza  --i-table table-no-m-c-u.qza  --p-sampling-depth 15000  --m-metadata-file Mapping_file_second_run.txt  --output-dir core-metrics-result
+#Alpha多样性分析
+#统计evenness组间差异是否显著
+time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/evenness_vector.qza  --m-metadata-file Mapping_file-2.txt --o-visualization core-metrics-results_1/evenness-group-significance.qzv
+#统计faith_pd组间差异是否显著
+time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/faith_pd_vector.qza  --m-metadata-file Mapping_file-2.txt --o-visualization core-metrics-results_1/faith_pd-group-significance.qzv
+#统计observed_otus组间差异是否显著
+time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/observed_otus_vector.qza  --m-metadata-file Mapping_file-2.txt --o-visualization core-metrics-results_1/observed_otus-group-significance.qzv
+#统计shannon组间差异是否显著
+time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/shannon_vector.qza  --m-metadata-file Mapping_file-
+2.txt --o-visualization core-metrics-results_1/shannon-group-significance.qzv
+
