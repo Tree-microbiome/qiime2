@@ -57,6 +57,5 @@ time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-
 #统计observed_otus组间差异是否显著
 time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/observed_otus_vector.qza  --m-metadata-file Mapping_file-2.txt --o-visualization core-metrics-results_1/observed_otus-group-significance.qzv
 #统计shannon组间差异是否显著
-time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/shannon_vector.qza  --m-metadata-file Mapping_file-
-2.txt --o-visualization core-metrics-results_1/shannon-group-significance.qzv
+time qiime diversity alpha-group-significance  --i-alpha-diversity core-metrics-results_1/shannon_vector.qza  --m-metadata-file Mapping_file-2.txt --o-visualization core-metrics-results_1/shannon-group-significance.qzv
 
